@@ -34,28 +34,19 @@ python3 burmese_eval/evaluate.py --completions "$COMPLETIONS_FILE" > "results/$D
 FUNC_JSONL=$(ls -t results/functional_eval_*.jsonl | head -n 1)
 mv "$FUNC_JSONL" "results/$DIR_NAME/"
 
-# 3. Reference-based Evaluation
-echo "📏 Running Reference-based Evaluation (chrF/BLEU)..."
-python3 burmese_eval/reference_eval.py --completions "$COMPLETIONS_FILE" > "results/$DIR_NAME/logs/reference_eval.log" 2>&1
-REF_JSONL=$(ls -t results/reference_eval_*.jsonl | head -n 1)
-mv "$REF_JSONL" "results/$DIR_NAME/"
-
-# 4. LLM Judge Rubric Scoring
+# 3. LLM Judge Rubric Scoring
 echo "⚖️ Running LLM-as-a-Judge (Rubric Scoring)..."
 python3 burmese_eval/llm_judge.py --completions "$COMPLETIONS_FILE" --judge-model "$JUDGE_MODEL" --sleep 0.5 > "results/$DIR_NAME/logs/llm_judge.log" 2>&1
 JUDGE_JSONL=$(ls -t results/llm_judge_*.jsonl | head -n 1)
 mv "$JUDGE_JSONL" "results/$DIR_NAME/"
 
-# 5. Summary Report
+# 4. Summary Report
 echo -e "\n✅ Evaluation Complete! Final Report:\n"
 echo "--- Functional Correction ---"
 tail -n 5 "results/$DIR_NAME/logs/functional_eval.log" | grep "pass@1" || echo "Check functional_eval.log"
 
 echo -e "\n--- Quality Rubric ---"
 python3 burmese_eval/score_quality.py --input "results/$DIR_NAME/$(basename $JUDGE_JSONL)"
-
-echo -e "\n--- Reference Similarity ---"
-python3 -c "import json; rows=list(map(json.loads, open('results/$DIR_NAME/$(basename $REF_JSONL)'))); print(f'chrF Expl: {sum(r[\"chrf_explanation\"] for r in rows)/len(rows):.2f}'); print(f'chrF Code: {sum(r[\"chrf_code\"] for r in rows)/len(rows):.2f}')"
 
 echo -e "\n🔗 All detailed logs saved in: results/$DIR_NAME/logs/"
 echo "-------------------------------------------------------"

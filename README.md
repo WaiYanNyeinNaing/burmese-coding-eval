@@ -16,8 +16,7 @@ src/
 │
 ├── run_inference.py          # STEP 1: Generate model completions (Ollama or API)
 ├── evaluate.py               # STEP 2A: Functional correctness (Pass@1)
-├── reference_eval.py         # STEP 2B: Similarity metrics (chrF/BLEU)
-├── llm_judge.py              # STEP 2C: Rubric scoring (Gemini 2.5 Flash Lite)
+├── llm_judge.py              # STEP 2B: Rubric scoring (Gemini 2.5 Flash Lite)
 └── score_quality.py          # Internal utility for rubric aggregation
 ```
 
@@ -38,7 +37,7 @@ To generate model completions:
 python3 src/run_inference.py --model <model_id>
 ```
 
-To execute the full pipeline (Functional + Reference + Rubric):
+To execute the full pipeline (Functional + Rubric):
 ```bash
 export GOOGLE_API_KEY=your_key_here
 ./src/run_full_eval.sh <model_name> results/completions_*.jsonl
@@ -52,12 +51,11 @@ All benchmark results and logs are saved in the git-ignored **`results/`** direc
 
 ## 📊 Metric Breakdown
 
-We use a 3-track evaluation to ensure technical accuracy and linguistic purity:
+We use a 2-track evaluation to ensure technical accuracy and linguistic purity:
 
 | Track | Tool | Logic | Metric |
 | :--- | :--- | :--- | :--- |
 | **Functional** | `evaluate.py` | Unit Test Execution | **Pass@1** |
-| **Reference** | `reference_eval.py`| chrF / BLEU | **Similarity** |
 | **LLM Judge** | `llm_judge.py` | Expert Rubric | **Quality (0-4)** |
 
 ### Scoring Rubric (Expert Grounded)
