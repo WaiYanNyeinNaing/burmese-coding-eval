@@ -6,7 +6,6 @@ def get_stats(model_dir):
     stats = {
         "Model": os.path.basename(model_dir),
         "Pass@1": "N/A",
-        "chrF": 0.0,
         "Judges": {}
     }
     
@@ -36,14 +35,6 @@ def get_stats(model_dir):
                     for d in dimensions:
                         stats["Judges"][judge_name][d] = sum(r.get(d, 0) for r in rows) / len(rows)
 
-    # 3. Reference
-    ref_files = glob.glob(os.path.join(model_dir, "reference_eval_*.jsonl"))
-    if ref_files:
-        with open(ref_files[0]) as f:
-            rows = [json.loads(l) for l in f if l.strip()]
-            if rows:
-                stats["chrF"] = sum(r['chrf_explanation'] for r in rows)/len(rows)
-
     return stats
 
 def main():
@@ -70,7 +61,7 @@ def main():
     
     # 1. Summary Table
     rubric_headers = " | ".join([f"Rubric({j})" for j in judge_keys])
-    header = f"{'Model':<25} | {'Pass@1':<8} | {rubric_headers} | {'chrF':<8}"
+    header = f"{'Model':<25} | {'Pass@1':<8} | {rubric_headers}"
     report_lines.append(header)
     report_lines.append("-" * len(header))
     
@@ -80,7 +71,7 @@ def main():
             score = s["Judges"].get(j, {}).get("final_score", 0.0)
             rubric_scores.append(f"{score:<{8+len(j)-6}.3f}")
         rubrics_str = " | ".join(rubric_scores)
-        row = f"{s['Model']:<25} | {s['Pass@1']:<8} | {rubrics_str} | {s.get('chrF', 0.0):<8.2f}"
+        row = f"{s['Model']:<25} | {s['Pass@1']:<8} | {rubrics_str}"
         report_lines.append(row)
 
     # 2. Rubric Breakdown
@@ -103,13 +94,12 @@ def main():
     # 3. Metric Glossary
     report_lines.append("\n📖 METRIC GLOSSARY")
     report_lines.append("-----------------")
-    report_lines.append("• Pass@1: % of coding tasks that passed all unit tests (Strict Logic Accuracy).")
-    report_lines.append("• Rubric Score: Overall quality based on the 9-dimension Burmese expert rubric.")
-    report_lines.append("• chrF: Character-level similarity to human ground-truth (Burmese vocabulary).")
-    report_lines.append("• Fluency: How natural the Burmese explanation sounds.")
-    report_lines.append("• Mix Penalty: Points deducted when the model uses non-Burmese (English/Hallucinated) words.")
-    report_lines.append("• Semantic Correctness: How accurately the explanation matches the actual code logic.")
-    report_lines.append("• Terminology: Usage of correct Burmese technical terms (e.g. 'ကိန်းပြည့်' for integer).")
+    report_lines.append("• Pass@1: % of coding tasks that passed all unit tests (Higher is better).")
+    report_lines.append("• Rubric Score: Overall quality score (0-4) based on Burmese expert rubric (Higher is better).")
+    report_lines.append("• Fluency: How natural and native the Burmese explanation sounds (Higher is better).")
+    report_lines.append("• Mix Penalty: Deduction for using unnecessary English/mixed script (Lower is better).")
+    report_lines.append("• Semantic Correctness: Logic alignment with the human reference (Higher is better).")
+    report_lines.append("• Terminology: Usage of correct Burmese technical terms (Higher is better).")
     
     report_content = "\n".join(report_lines)
     print(report_content)
